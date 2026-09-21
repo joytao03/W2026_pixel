@@ -130,7 +130,7 @@ The current local milestone adds three home buttons, server information, and a t
 This is a development build, not the final M1 submission:
 - Google sign-in uses Credential Manager and backend Google ID token verification. Configure both OAuth clients before testing sign-in. Server information is only requested by the UI after successful verification.
 - Live Updates connects through Socket.IO over WebSocket to this backend. The backend uses the Node.js built-in WebSocket client to receive the course pixel stream and forwards the original JSON text immediately.
-- Timer accepts minutes and seconds, supports cancellation, and opens a generated symmetric pixel creature when it expires. Tap the creature to change colors or generate another one.
+- Timer accepts minutes and seconds, supports cancellation, and opens a random meal recommendation when it expires. The surprise includes a photo (when available), meal name, category/cuisine, measured ingredients and full recipe instructions. Users can request another random meal or start another timer.
 - The timer continues across in-app navigation and activity rotation. It is not a background alarm service; do not rely on it after force-stop or device reboot.
 
 ### Run locally on Windows
@@ -175,3 +175,11 @@ Use the same Google Cloud project for both OAuth clients. Configure Google Auth 
 7. Local HTTP credential transport is restricted to debug builds. Use HTTPS for the final cloud APK. No Firebase, OAuth client secret, or database is required for this flow.
 
 Official references: https://developer.android.com/identity/sign-in/credential-manager-siwg-implementation and https://developers.google.com/identity/sign-in/android/backend-auth
+
+### Timer recipe surprise (TheMealDB)
+
+The Android app calls https://www.themealdb.com/api/json/v1/1/random.php directly over HTTPS when the countdown ends or the user asks for another meal. No cloud backend update, new library, or secret key is required. TheMealDB documents test key 1 for development/educational use; public app-store releases require a supporter key (https://www.themealdb.com/api.php).
+
+The screen pairs strIngredient1 through strIngredient20 with their strMeasure fields, skips blank ingredients, and preserves the original instructions. It credits TheMealDB and links to the meal page. Loading and network errors are visible with manual retry. Missing/failed images do not hide the recipe. Fetched recipe JSON survives activity recreation; it is not an offline recipe database. The recommendation is random and does not filter allergies or dietary preferences. Internet access is required, and the third-party service may be unavailable or repeat a meal.
+
+Manual acceptance: set a 5-second timer, confirm it opens the recipe automatically, scroll through ingredients/instructions, request another meal, and test retry with internet disconnected. Confirm Google sign-in and Live Updates still work. This replaces the original pixel-creature surprise; document the recipe behavior in M1_Doc.pdf.

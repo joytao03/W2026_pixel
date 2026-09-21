@@ -32,7 +32,6 @@ import java.net.HttpURLConnection
 import java.net.NetworkInterface
 import java.net.URL
 import java.util.Locale
-import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,8 +49,6 @@ private fun PixelApp() {
     var deadline by rememberSaveable { mutableStateOf(0L) }
     var remaining by remember { mutableStateOf(0L) }
     var timerError by rememberSaveable { mutableStateOf("") }
-    var seed by rememberSaveable { mutableStateOf(1) }
-    var palette by rememberSaveable { mutableStateOf(0) }
     LaunchedEffect(deadline) {
         if (deadline > 0) {
             while (true) {
@@ -59,7 +56,6 @@ private fun PixelApp() {
                 remaining = ((millis + 999) / 1000).coerceAtLeast(0)
                 if (millis <= 0) {
                     deadline = 0
-                    seed = Random.nextInt()
                     page = "surprise"
                     break
                 }
@@ -68,9 +64,11 @@ private fun PixelApp() {
         } else remaining = 0
     }
     BackHandler(page != "home") { page = "home" }
+    val scrollState = rememberScrollState()
+    LaunchedEffect(page) { scrollState.scrollTo(0) }
     Scaffold { insets ->
         Column(
-            Modifier.fillMaxSize().padding(insets).verticalScroll(rememberScrollState()).padding(24.dp),
+            Modifier.fillMaxSize().padding(insets).verticalScroll(scrollState).padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
             if (page != "home") TextButton(onClick = { page = "home" }) { Text("Back to home") }
@@ -81,14 +79,14 @@ private fun PixelApp() {
                     Text("Explore your server, watch pixels come alive, or make time for a surprise.")
                     MenuButton("01  Login + Server", "Inspect your backend connection") { page = "server" }
                     MenuButton("02  Live Updates", "A 16 x 16 canvas for the live stream") { page = "live" }
-                    MenuButton("03  Timer", "A countdown with a pixel surprise") { page = "timer" }
+                    MenuButton("03  Timer", "A countdown with a recipe surprise") { page = "timer" }
                     if (deadline > 0) Text("Timer running: ${formatDuration(remaining)}")
                 }
                 "server" -> GoogleServerScreen()
                 "live" -> LiveUpdatesScreen()
                 "timer" -> {
                     Text("Make time for a surprise", style = MaterialTheme.typography.headlineMedium)
-                    Text("When the countdown ends, discover a new pixel creature. Change its colors or generate a friend.")
+                    Text("When the countdown ends, discover a random meal with ingredients and cooking instructions from TheMealDB.")
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         OutlinedTextField(value = minutes, onValueChange = { if (it.length <= 3 && it.all(Char::isDigit)) minutes = it },
                             label = { Text("Minutes") }, enabled = deadline == 0L, singleLine = true,
@@ -111,14 +109,7 @@ private fun PixelApp() {
                     }
                     Text("You can explore other pages while it runs. Keep the app open for the surprise; background alarms are not implemented.", style = MaterialTheme.typography.bodySmall)
                 }
-                "surprise" -> {
-                    Text("Meet your pixel creature!", style = MaterialTheme.typography.headlineMedium)
-                    Text("Time is up. Tap the creature to change its colors.")
-                    val colors = remember(seed, palette) { creature(seed, palette) }
-                    PixelCanvas(colors) { palette = (palette + 1) % 3 }
-                    Button(onClick = { seed = Random.nextInt() }) { Text("Generate a friend") }
-                    OutlinedButton(onClick = { page = "timer" }) { Text("Set another timer") }
-                }
+                "surprise" -> MealSurpriseScreen(onSetTimer = { page = "timer" })
             }
         }
     }
@@ -170,16 +161,4 @@ internal fun PixelCanvas(pixels: List<Color>, onTap: (() -> Unit)? = null) {
             drawLine(Color(0x22000000), Offset(0f, i * cell), Offset(size.width, i * cell), 1f)
         }
     }
-}
-
-private fun creature(seed: Int, palette: Int): List<Color> {
-    val colors = listOf(Color(0xFF5B57D6), Color(0xFF008577), Color(0xFFE86548))
-    val random = Random(seed)
-    val result = MutableList(256) { Color(0xFFF1F3F7) }
-    for (y in 3..12) for (x in 3..7) if (random.nextInt(100) < 70) {
-        result[y * 16 + x] = colors[palette]
-        result[y * 16 + (15 - x)] = colors[palette]
-    }
-    for (x in listOf(5, 10)) { result[6 * 16 + x] = Color.White; result[7 * 16 + x] = Color(0xFF182238) }
-    return result
 }
