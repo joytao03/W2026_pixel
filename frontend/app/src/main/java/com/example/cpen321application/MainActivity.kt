@@ -86,7 +86,7 @@ private fun PixelApp() {
                 "live" -> LiveUpdatesScreen()
                 "timer" -> {
                     Text("Make time for a surprise", style = MaterialTheme.typography.headlineMedium)
-                    Text("When the countdown ends, discover a random meal with ingredients and cooking instructions from TheMealDB.")
+                    Text("When the countdown ends, answer three quick food questions and discover your top three recipe matches.")
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         OutlinedTextField(value = minutes, onValueChange = { if (it.length <= 3 && it.all(Char::isDigit)) minutes = it },
                             label = { Text("Minutes") }, enabled = deadline == 0L, singleLine = true,
